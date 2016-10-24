@@ -1,4 +1,4 @@
-SOURCES:=AliAnaSelector.cxx AliAnaQA.cxx
+SOURCES:=src/AliAnaSelector.cxx src/AliAnaQA.cxx
 
 HEADERS:=$(SOURCES:cxx=h)
 
@@ -6,19 +6,23 @@ CXXFLAGS:=-std=c++11 -fPIC -O2 -g -I$(ALICE_ROOT)/include -I$(ALICE_PHYSICS)/inc
 
 all: libAnalysis.so
 
-test: libAnalysis.so
-	time root -b -q ana.C'("filelist.txt", kFALSE, 100000)'
+test: histos_local.root
 
-ana: histos.root
-
-histos.root: libAnalysis.so
-	time root -b -q ana.C'("filelist.txt")'
-
-plot: plot.C histos.root
-	rm fig/*.pdf
-	root -b -q $<
+ana: histos_proof.root
 
 pdf: summary.pdf
+
+histos_local.root: src/ana.C libAnalysis.so
+	time root -b -q $<'("filelist.txt", kFALSE, 100000)'
+	mv histos.root histos_local.root
+
+histos_proof.root: src/ana.C libAnalysis.so
+	time root -b -q $<'("filelist.txt")'
+	mv histos.root histos_proof.root
+
+plot_%: src/plot.C histos_%.root
+	rm -f fig/*.pdf
+	root -b -q $<'("'histos_$*.root'")'
 
 summary.pdf: fig/*.pdf
 	pdftk fig/*.pdf cat output summary.pdf

@@ -11,9 +11,9 @@ void drawClasses(TH1 *h, const std::string &options)
   c.SaveAs(TString::Format("fig/%s_proj.pdf", h->GetName()));
 }
 
-void plot()
+void plot(const std::string &name = "histos.root")
 {
-  std::unique_ptr<TFile> file(TFile::Open("histos.root", "read"));
+  std::unique_ptr<TFile> file(TFile::Open(name.c_str(), "read"));
   std::map<std::string, TH1*> histoMap;
 
   std::map<std::string, std::string> drawOptions;
