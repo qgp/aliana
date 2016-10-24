@@ -1,4 +1,4 @@
-SOURCES:=src/AliAnaSelector.cxx src/AliAnaQA.cxx
+SOURCES:=src/AliAnaSelector.cxx src/AliAnaQA.cxx src/plotter.cxx
 
 HEADERS:=$(SOURCES:cxx=h)
 
@@ -30,5 +30,5 @@ summary.pdf: fig/*.pdf
 libAnalysis.so: AnalysisDict.cxx $(SOURCES)
 	g++ -shared -o$@ `root-config --ldflags` $(CXXFLAGS) -I$(ROOTSYS)/include $^
 
-AnalysisDict.cxx: $(HEADERS) LinkDef.h
+AnalysisDict.cxx: $(HEADERS) src/LinkDef.h
 	rootcint -f $@ -c $(CXXFLAGS) -p -rmf libAnalysis.rootmap -rml libAnalysis.so -rml libTreePlayer $^
