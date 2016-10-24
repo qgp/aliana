@@ -1,4 +1,4 @@
-#include "AliAnaSelector.h"
+#include "AliAnaQA.h"
 
 void ana(const std::string listname = "filelist.txt",
          Bool_t proof = kTRUE,
@@ -25,7 +25,7 @@ void ana(const std::string listname = "filelist.txt",
   }
 
   // run analysis
-  TSelector *selector = new AliAnaSelector();
+  TSelector *selector = new AliAnaQA();
   chain.Process(selector, "", nEvents);
 
   // terminate PROOF (if enabled)

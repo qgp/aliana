@@ -19,6 +19,9 @@ class AliAnaSelector : public TSelector {
   virtual void    SlaveTerminate();
   virtual Int_t   Version() const { return 2; }
 
+  virtual void    UserInit() {}
+  virtual Bool_t  UserProcess() { return kTRUE; }
+
   TH1 *AddHistogram(TH1 *h);
   TH1 *GetHistogram(const std::string &name);
 
@@ -37,4 +40,45 @@ protected:
 
   ClassDef(AliAnaSelector, 0);
 };
+
+template<class T>
+void AliAnaSelector::AddValue(const std::string &name, const std::string &name_orig)
+{
+  if (fValueMap.count(name) != 0)
+    return;
+
+  // printf("AddValue(\"%s\", \"%s\")\n", name.c_str(), name_orig.c_str());
+  if (name_orig.length() == 0)
+    fValueMap[name] = new TTreeReaderValue<T>(fReader, name.c_str());
+  else
+    fValueMap[name] = new TTreeReaderValue<T>(fReader, name_orig.c_str());
+}
+
+template<class T>
+T AliAnaSelector::GetValue(const std::string &name, const std::string &name_orig)
+{
+  T *ptr = GetPointer<T>(name, name_orig);
+  if (!ptr)
+    ::Fatal("AliAnaSelector", "got null pointer for TTreeReaderValue");
+
+  return *ptr;
+}
+
+template<class T>
+T* AliAnaSelector::GetPointer(const std::string &name, const std::string &name_orig)
+{
+  if (fValueMap.count(name) == 0) {
+    printf("need to add value for %s, not yet working ...\n", name.c_str());
+    ::Fatal("AliAnaSelector", "...");
+
+    AddValue<T>(name, name_orig);
+    // fValueMap[name]->CreateProxy();
+  }
+
+  // if (!fValueMap[name]->IsValid())
+  //   printf("value for \"%s\" not valid: setup/read status: %i/%i\n",
+  //          name.c_str(), fValueMap[name]->GetSetupStatus(), fValueMap[name]->GetReadStatus());
+
+  return ((TTreeReaderValue<T>*) fValueMap[name])->Get();
+}
 #endif

@@ -4,6 +4,7 @@
 #pragma link off all functions;
 #pragma link C++ nestedclasses;
 
+#pragma link C++ class AliAnaQA+;
 #pragma link C++ class AliAnaSelector+;
 
 #endif
