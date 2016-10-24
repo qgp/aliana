@@ -1,5 +1,6 @@
-#include "TH1F.h"
-#include "TH2F.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TH3.h"
 
 #include "AliVTrack.h"
 
@@ -87,6 +88,103 @@ Bool_t AliAnaQA::UserProcess()
     if (AliVTrack *track = (AliVTrack*) (*tracks)[iTrack])
       GetHistogram("etaphi")->Fill(track->Eta(), track->Phi());
   }
+
+  return kTRUE;
+}
+
+Bool_t AliAnaQA::IsGoodEvent() const
+{
+  // //all
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"all",Form("%i",fCurrentRunNumber),1.);
+
+  // //bad runs
+  // if(fCurrentRunNumber==225611 || fCurrentRunNumber==225609 || fCurrentRunNumber==225589)
+  //   return kFALSE; // skip runs with long tails in V0C
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after rejecting bad runs",Form("%i",fCurrentRunNumber),1.);
+
+  // //physics selection
+  // if (fV0CDecision!=1 || fV0ADecision!=1)
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after V0 decision check",Form("%i",fCurrentRunNumber),1.);
+
+  // //incomplete events
+  // if (fIsIncomplete)
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after incomplete events",Form("%i",fCurrentRunNumber),1.);
+
+  // //V0 asymmetry cut
+  // if (IsAsymmetricV0())
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after V0 asymmetry cut",Form("%i",fCurrentRunNumber),1.);
+
+  // //trigger mask (using physics selection)
+  // //  if (!(fSelectMask & triggerMask)) return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after PS check",Form("%i",fCurrentRunNumber),1.);
+
+  // //trigger check
+  // if (classfired && !(fClassesFired & classfired))
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after trigger check",Form("%i",fCurrentRunNumber),1.);
+
+  // //mean=0 means that it is not calibrated
+  // if (fMultMeanV0M <=0 || fMultMeanTKL <=0)
+  //   return kFALSE;
+  // if (hEventCount)
+  //   hEventCount->Fill(cent,"Missing AliMult calibration",Form("%i",fCurrentRunNumber),1.);
+
+  // // cut events with zvtx==0
+  // //if(TMath::Abs(fVtxZ)<1.e-9) cout << fVtxZ << "   " << fNchTPC << endl;
+  // //if (TMath::Abs(fVtxZ)<1.e-9) return 0;
+  // //if(hEventCount) hEventCount->Fill(cent,"after zvtx=0 cut",Form("%i",fCurrentRunNumber),1.);
+  // //  if(!fIsEventSel) return 0; // implement same event selection as in AliMultSelection class (INEL > 0)
+  // //  if(hEventCount) hEventCount->Fill(cent,"INEL>0 cut",Form("%i",fCurrentRunNumber),1.);
+  // //Z_vtx
+  // //SPD vtx contributors
+  // //  if (fSPDVtxContributors < 1) return kFALSE;
+  // //  if(hEventCount)hEventCount->Fill(cent,"after SPD vtx contributors cut",Form("%i",fCurrentRunNumber),1.);
+  // if (fVtxContributors < 1 || fSPDVtxContributors < 1)
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after cut on contributors",Form("%i",fCurrentRunNumber),1.);
+  // if (TMath::Abs(fVtxZ-fSPDVtxZ)>0.5)
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after SPD - primary vtx consistency",Form("%i",fCurrentRunNumber),1.);
+  // if (fVtxZ>zmax || fVtxZ<zmin)
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after zvtx cut",Form("%i",fCurrentRunNumber),1.);
+
+  // if(isMC)
+  //   return kTRUE;
+
+  // //out-of-bunch 11 BC
+  // if (IsOutOfBunchPileup())
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after out-of-bunch pileup check",Form("%i",fCurrentRunNumber),1.);
+  // //online-offline SPD fastor
+  // if(fonlineSPD <= -20.589 + 0.73664*fofflineSPD)
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after online-offline SPD fastOR cut",Form("%i",fCurrentRunNumber),1.);
+  // //SPD pileup
+  // if (fIsPileupSPD)
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after SPD pileup check",Form("%i",fCurrentRunNumber),1.);
+  // //tkl-cluster cut
+  // if (fNofITSClusters[0]+fNofITSClusters[1]>64+4*fMultTKL)
+  //   return kFALSE;
+  // if(hEventCount)
+  //   hEventCount->Fill(cent,"after tkl-cluster cut",Form("%i",fCurrentRunNumber),1.);
 
   return kTRUE;
 }

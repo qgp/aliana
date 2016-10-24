@@ -1,6 +1,10 @@
 #ifndef PLOTTER_H
 #define PLOTTER_H
 
+#include <functional>
+#include <memory>
+#include <map>
+
 #include "TFile.h"
 
 class TH1;

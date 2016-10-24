@@ -12,6 +12,8 @@ public:
   virtual void    UserInit();
   virtual Bool_t  UserProcess();
 
+  Bool_t IsGoodEvent() const;
+
 protected:
   std::map<Int_t, Int_t> fRunIndex;
 
