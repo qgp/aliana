@@ -27,7 +27,7 @@ void ana(const std::string listname = "filelist.txt",
   }
 
   // run analysis
-  TSelector *selector = (TSelector*) TClass::GetClass(ana.c_str())->New();
+  AliAnaSelector *selector = AliAnaSelector::CreateSelector(ana);
   chain.Process(selector, "", nEvents);
 
   // terminate PROOF (if enabled)

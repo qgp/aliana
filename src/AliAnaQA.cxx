@@ -48,7 +48,7 @@ void AliAnaQA::UserInit()
   GetHistogram("classes")->GetXaxis()->SetBinLabel(3, "CMSH7-B-");
   GetHistogram("classes")->GetXaxis()->SetBinLabel(4, "CVHMV0M-B-");
   GetHistogram("classes")->GetXaxis()->SetBinLabel(5, "CVHMSH2-B-");
-  AddHistogram(new TH3D("stats",";centrality;;",
+  AddHistogram(new TH3D("stats","statistics;centrality;;",
                         100, 0., 100.,
                         1, 0, 1,
                         1, 0, 1));
@@ -57,15 +57,15 @@ void AliAnaQA::UserInit()
                         200, 0., 2*TMath::Pi()));
   AddHistogram(new TH1F("runs", "run;counts",
                         1, 0, 0));
-  AddHistogram(new TH2F("perc_v0m", "V0M percentile;V0M percentile;run;counts",
+  AddHistogram(new TH2F("perc_v0m", "V0M percentile;percentile;run;counts",
                         100, 0., 100.,
                         1, 0, 0));
-  AddHistogram(new TH2F("perc_tkl", "TKL percentile;TKL percentile;run;counts",
+  AddHistogram(new TH2F("perc_tkl", "TKL percentile;percentile;run;counts",
                         50, 0., 100.,
                         1, 0, 0));
-  AddHistogram(new TH1F("vtxz", "z_{vtx} (cm);counts",
+  AddHistogram(new TH1F("vtxz", "vertex;z_{vtx} (cm);counts",
                         100, -20., 20.));
-  AddHistogram(new TH1F("vtxz_spd", "z_{vtx}^{SPD} (cm);counts",
+  AddHistogram(new TH1F("vtxz_spd", "SPD vertex;z_{vtx}^{SPD} (cm);counts",
                         100, -20., 20.));
 }
 
@@ -198,16 +198,15 @@ Bool_t AliAnaQA::IsGoodEvent()
   ((TH3*) GetHistogram("stats"))->Fill(cent, "after SPD pile-up check", runName.Data(), 1.);
 
   // //tkl-cluster cut
-  // UInt_t *noitsclusters = GetValue<UInt_t*>("nofITSClusters");
-  UInt_t multTKL = GetValue<Float_t>("multTKL");
-  if (fNofITSClusters.GetSize() > 0) {
-    if (fNofITSClusters[0]+fNofITSClusters[1] > 64+4*multTKL)
-      return kFALSE;
-  }
-  else {
-    printf("ERROR\n");
-  }
-  ((TH3*) GetHistogram("stats"))->Fill(cent, "after tkl-cluster cut", runName.Data(), 1.);
+  // UInt_t multTKL = GetValue<Float_t>("multTKL");
+  // if (fNofITSClusters.GetSize() > 0) {
+  //   if (fNofITSClusters[0]+fNofITSClusters[1] > 64+4*multTKL)
+  //     return kFALSE;
+  // }
+  // else {
+  //   printf("ERROR\n");
+  // }
+  // ((TH3*) GetHistogram("stats"))->Fill(cent, "after tkl-cluster cut", runName.Data(), 1.);
 
   return kTRUE;
 }

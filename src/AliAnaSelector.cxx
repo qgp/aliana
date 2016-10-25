@@ -22,6 +22,11 @@ AliAnaSelector::~AliAnaSelector()
 
 }
 
+AliAnaSelector *AliAnaSelector::CreateSelector(const std::string &name)
+{
+  return (AliAnaSelector*) TClass::GetClass(name.c_str())->New();
+}
+
 void AliAnaSelector::Init(TTree *tree)
 {
   fReader.SetTree(tree);
