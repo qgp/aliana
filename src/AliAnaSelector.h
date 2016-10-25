@@ -50,15 +50,6 @@ void AliAnaSelector::AddValue(const std::string &name, const std::string &name_o
   if (fValueMap.count(name) != 0)
     return;
 
-  // TBranch *br = fReader.GetTree()->GetBranch(name.c_str());
-  // T obj;
-  // TClass *cl;
-  // EDataType type;
-  // br->GetExpectedType(cl, type);
-  // if (cl)
-  //   if (obj.GetClass() != cl)
-  //     printf("problem");
-
   // printf("AddValue(\"%s\", \"%s\")\n", name.c_str(), name_orig.c_str());
   if (name_orig.length() == 0)
     fValueMap[name] = new TTreeReaderValue<T>(fReader, name.c_str());
@@ -92,6 +83,29 @@ T* AliAnaSelector::GetPointer(const std::string &name, const std::string &name_o
   if (fTypeMap[name] != typeid(T).hash_code()) {
     ::Error("AliAnaSelector", "Inconsistent type requested for %s", name.c_str());
     return 0x0;
+  }
+
+  // checking for proper type
+  const std::string branchname = fValueMap[name]->GetBranchName();
+  TBranch *br = fReader.GetTree()->GetBranch(branchname.c_str());
+  TClass *cl;
+  EDataType type;
+  Int_t result = br ? br->GetExpectedType(cl, type) : -1;
+  if (result != 0)
+    printf("no result for %s\n", name.c_str());
+
+  if (cl) {
+    T obj;
+    TObject *test = (TObject*) cl->New();
+    if (typeid(*test).hash_code() != typeid(obj).hash_code())
+      printf("problem\n");
+  }
+  else if (type > 0) {
+    if (TDataType::GetType(typeid(T)) != type)
+      printf("problem\n");
+  }
+  else {
+    printf("problem\n");
   }
 
   // if (!fValueMap[name]->IsValid())
