@@ -1,6 +1,8 @@
 #ifndef QA_SELECTOR_H
 #define QA_SELECTOR_H
 
+#include <typeindex>
+
 #include "TSelector.h"
 #include "TTreeReader.h"
 #include "TList.h"
@@ -37,6 +39,7 @@ protected:
 
   std::map<std::string, TH1*> fHistoMap;
   std::map<std::string, ROOT::Internal::TTreeReaderValueBase*> fValueMap;
+  std::map<std::string, size_t> fTypeMap;
 
   ClassDef(AliAnaSelector, 0);
 };
@@ -47,11 +50,22 @@ void AliAnaSelector::AddValue(const std::string &name, const std::string &name_o
   if (fValueMap.count(name) != 0)
     return;
 
+  // TBranch *br = fReader.GetTree()->GetBranch(name.c_str());
+  // T obj;
+  // TClass *cl;
+  // EDataType type;
+  // br->GetExpectedType(cl, type);
+  // if (cl)
+  //   if (obj.GetClass() != cl)
+  //     printf("problem");
+
   // printf("AddValue(\"%s\", \"%s\")\n", name.c_str(), name_orig.c_str());
   if (name_orig.length() == 0)
     fValueMap[name] = new TTreeReaderValue<T>(fReader, name.c_str());
   else
     fValueMap[name] = new TTreeReaderValue<T>(fReader, name_orig.c_str());
+
+  fTypeMap[name] = typeid(T).hash_code();
 }
 
 template<class T>
@@ -73,6 +87,11 @@ T* AliAnaSelector::GetPointer(const std::string &name, const std::string &name_o
 
     AddValue<T>(name, name_orig);
     // fValueMap[name]->CreateProxy();
+  }
+
+  if (fTypeMap[name] != typeid(T).hash_code()) {
+    ::Error("AliAnaSelector", "Inconsistent type requested for %s", name.c_str());
+    return 0x0;
   }
 
   // if (!fValueMap[name]->IsValid())

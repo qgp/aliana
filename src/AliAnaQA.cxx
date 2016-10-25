@@ -3,19 +3,37 @@
 #include "TH3.h"
 
 #include "AliVTrack.h"
+#include "AliVEvent.h"
 
 #include "AliAnaQA.h"
 
 AliAnaQA::AliAnaQA(TTree *)
-  : AliAnaSelector()
+  : AliAnaSelector(),
+    fNofITSClusters(fReader, "nofITSClusters.fNofITSClusters")
 {
   AddValue<Int_t>("run");
   AddValue<UInt_t>("classes");
   AddValue<Float_t>("multV0Meq");
+  AddValue<Float_t>("multmeanV0A");
+  AddValue<Float_t>("multmeanV0C");
   AddValue<Float_t>("multmeanV0M");
+  AddValue<Float_t>("multmeanTKL");
   AddValue<Float_t>("perc_V0M", "multpercV0Meq");
   AddValue<Float_t>("perc_TKL", "multpercTKL");
+  AddValue<Int_t>("V0ADecision");
+  AddValue<Int_t>("V0CDecision");
+  AddValue<Int_t>("IsIncomplete");
+  AddValue<UInt_t>("mask");
   AddValue<TClonesArray>("tracks");
+  AddValue<UInt_t>("vtxContributors");
+  AddValue<UInt_t>("spdvtxContributors");
+  AddValue<Float_t>("vtxz");
+  AddValue<Float_t>("spdvtxz");
+  AddValue<TBits>("IR1");
+  AddValue<UInt_t>("onlineSPD");
+  AddValue<UInt_t>("offlineSPD");
+  AddValue<Float_t>("multTKL");
+  AddValue<Bool_t>("pileupspd");
 }
 
 void AliAnaQA::UserInit()
@@ -30,6 +48,10 @@ void AliAnaQA::UserInit()
   GetHistogram("classes")->GetXaxis()->SetBinLabel(3, "CMSH7-B-");
   GetHistogram("classes")->GetXaxis()->SetBinLabel(4, "CVHMV0M-B-");
   GetHistogram("classes")->GetXaxis()->SetBinLabel(5, "CVHMSH2-B-");
+  AddHistogram(new TH3D("stats",";centrality;;",
+                        100, 0., 100.,
+                        1, 0, 1,
+                        1, 0, 1));
   AddHistogram(new TH2F("etaphi", "tracks;#eta;#varphi",
                         200, -1., 1.,
                         200, 0., 2*TMath::Pi()));
@@ -39,8 +61,12 @@ void AliAnaQA::UserInit()
                         100, 0., 100.,
                         1, 0, 0));
   AddHistogram(new TH2F("perc_tkl", "TKL percentile;TKL percentile;run;counts",
-                        100, 0., 100.,
+                        50, 0., 100.,
                         1, 0, 0));
+  AddHistogram(new TH1F("vtxz", "z_{vtx} (cm);counts",
+                        100, -20., 20.));
+  AddHistogram(new TH1F("vtxz_spd", "z_{vtx}^{SPD} (cm);counts",
+                        100, -20., 20.));
 }
 
 Bool_t AliAnaQA::UserProcess()
@@ -71,14 +97,16 @@ Bool_t AliAnaQA::UserProcess()
   // if (run != 259261)
   //   return kTRUE;
 
-  // pass only for min. bias
-  if ((classes & 0x1) == 0)
+  if (!IsGoodEvent())
     return kTRUE;
 
   // ((TH2*) GetHistogram("perc_v0m"))->Fill(GetValue<Float_t>("perc_V0M"), fRunIndex[run] + 1, 1.);
   // ((TH2*) GetHistogram("perc_tkl"))->Fill(GetValue<Float_t>("perc_TKL"), fRunIndex[run] + 1, 1.);
   ((TH2*) GetHistogram("perc_v0m"))->Fill(GetValue<Float_t>("perc_V0M"), runName.Data(), 1.);
   ((TH2*) GetHistogram("perc_tkl"))->Fill(GetValue<Float_t>("perc_TKL"), runName.Data(), 1.);
+
+  GetHistogram("vtxz")->Fill(GetValue<Float_t>("vtxz"));
+  GetHistogram("vtxz_spd")->Fill(GetValue<Float_t>("spdvtxz"));
 
   TClonesArray *tracks = GetPointer<TClonesArray>("tracks");
   const Int_t nTracks = tracks->GetEntriesFast();
@@ -92,29 +120,24 @@ Bool_t AliAnaQA::UserProcess()
   return kTRUE;
 }
 
-Bool_t AliAnaQA::IsGoodEvent() const
+Bool_t AliAnaQA::IsGoodEvent()
 {
-  // //all
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"all",Form("%i",fCurrentRunNumber),1.);
+  const Float_t cent = GetValue<Float_t>("perc_V0M");
+  const TString runName = TString::Format("%i", GetValue<Int_t>("run"));
 
-  // //bad runs
-  // if(fCurrentRunNumber==225611 || fCurrentRunNumber==225609 || fCurrentRunNumber==225589)
-  //   return kFALSE; // skip runs with long tails in V0C
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after rejecting bad runs",Form("%i",fCurrentRunNumber),1.);
+  // all
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "all", runName.Data(), 1.);
 
-  // //physics selection
-  // if (fV0CDecision!=1 || fV0ADecision!=1)
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after V0 decision check",Form("%i",fCurrentRunNumber),1.);
+  // physics selection
+  if ((GetValue<Int_t>("V0ADecision") != 1) ||
+      (GetValue<Int_t>("V0CDecision") != 1))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after V0 decision", runName.Data(), 1.);
 
-  // //incomplete events
-  // if (fIsIncomplete)
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after incomplete events",Form("%i",fCurrentRunNumber),1.);
+  // incomplete events
+  if (GetValue<Int_t>("IsIncomplete"))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after incomplete events", runName.Data(), 1.);
 
   // //V0 asymmetry cut
   // if (IsAsymmetricV0())
@@ -122,69 +145,82 @@ Bool_t AliAnaQA::IsGoodEvent() const
   // if(hEventCount)
   //   hEventCount->Fill(cent,"after V0 asymmetry cut",Form("%i",fCurrentRunNumber),1.);
 
-  // //trigger mask (using physics selection)
-  // //  if (!(fSelectMask & triggerMask)) return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after PS check",Form("%i",fCurrentRunNumber),1.);
+  // trigger mask (using physics selection)
+  if (!(GetValue<UInt_t>("mask") & AliVEvent::kAny))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after PS", runName.Data(), 1.);
 
-  // //trigger check
-  // if (classfired && !(fClassesFired & classfired))
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after trigger check",Form("%i",fCurrentRunNumber),1.);
+  //trigger check
+  UInt_t classfired = 1 << 0; // MB
+  if (classfired && !(GetValue<UInt_t>("classes") & classfired))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after trigger", runName.Data(), 1.);
 
-  // //mean=0 means that it is not calibrated
-  // if (fMultMeanV0M <=0 || fMultMeanTKL <=0)
-  //   return kFALSE;
-  // if (hEventCount)
-  //   hEventCount->Fill(cent,"Missing AliMult calibration",Form("%i",fCurrentRunNumber),1.);
+  //mean=0 means that it is not calibrated
+  if ((GetValue<Float_t>("multmeanV0M") <= 0) ||
+      (GetValue<Float_t>("multmeanTKL") <=0))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "missing mult calib", runName.Data(), 1.);
 
-  // // cut events with zvtx==0
-  // //if(TMath::Abs(fVtxZ)<1.e-9) cout << fVtxZ << "   " << fNchTPC << endl;
-  // //if (TMath::Abs(fVtxZ)<1.e-9) return 0;
-  // //if(hEventCount) hEventCount->Fill(cent,"after zvtx=0 cut",Form("%i",fCurrentRunNumber),1.);
-  // //  if(!fIsEventSel) return 0; // implement same event selection as in AliMultSelection class (INEL > 0)
-  // //  if(hEventCount) hEventCount->Fill(cent,"INEL>0 cut",Form("%i",fCurrentRunNumber),1.);
-  // //Z_vtx
-  // //SPD vtx contributors
-  // //  if (fSPDVtxContributors < 1) return kFALSE;
-  // //  if(hEventCount)hEventCount->Fill(cent,"after SPD vtx contributors cut",Form("%i",fCurrentRunNumber),1.);
-  // if (fVtxContributors < 1 || fSPDVtxContributors < 1)
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after cut on contributors",Form("%i",fCurrentRunNumber),1.);
-  // if (TMath::Abs(fVtxZ-fSPDVtxZ)>0.5)
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after SPD - primary vtx consistency",Form("%i",fCurrentRunNumber),1.);
-  // if (fVtxZ>zmax || fVtxZ<zmin)
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after zvtx cut",Form("%i",fCurrentRunNumber),1.);
+  if ((GetValue<UInt_t>("vtxContributors") < 1) ||
+      (GetValue<UInt_t>("spdvtxContributors") < 1))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after vtx contrib", runName.Data(), 1.);
 
+  if (TMath::Abs(GetValue<Float_t>("vtxz") - GetValue<Float_t>("spdvtxz")) > 0.5)
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after SPD vs primary check", runName.Data(), 1.);
+
+  const Double_t zmin = -10.;
+  const Double_t zmax =  10.;
+  if ((GetValue<Float_t>("vtxz") > zmax) ||
+      (GetValue<Float_t>("vtxz") < zmin))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after zvtx cut", runName.Data(), 1.);
+
+  // stop here for MC
   // if(isMC)
   //   return kTRUE;
 
-  // //out-of-bunch 11 BC
-  // if (IsOutOfBunchPileup())
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after out-of-bunch pileup check",Form("%i",fCurrentRunNumber),1.);
-  // //online-offline SPD fastor
-  // if(fonlineSPD <= -20.589 + 0.73664*fofflineSPD)
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after online-offline SPD fastOR cut",Form("%i",fCurrentRunNumber),1.);
-  // //SPD pileup
-  // if (fIsPileupSPD)
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after SPD pileup check",Form("%i",fCurrentRunNumber),1.);
+  // out-of-bunch 11 BC
+  if (IsOutOfBunchPileUp())
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after out-of-bunch pileup", runName.Data(), 1.);
+
+  // online-offline SPD fastor
+  if(GetValue<UInt_t>("onlineSPD") <= -20.589 + 0.73664*GetValue<UInt_t>("offlineSPD"))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after on-offline SPD", runName.Data(), 1.);
+
+  // SPD pileup
+  if (GetValue<Bool_t>("pileupspd"))
+    return kFALSE;
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after SPD pile-up check", runName.Data(), 1.);
+
   // //tkl-cluster cut
-  // if (fNofITSClusters[0]+fNofITSClusters[1]>64+4*fMultTKL)
-  //   return kFALSE;
-  // if(hEventCount)
-  //   hEventCount->Fill(cent,"after tkl-cluster cut",Form("%i",fCurrentRunNumber),1.);
+  // UInt_t *noitsclusters = GetValue<UInt_t*>("nofITSClusters");
+  UInt_t multTKL = GetValue<Float_t>("multTKL");
+  if (fNofITSClusters.GetSize() > 0) {
+    if (fNofITSClusters[0]+fNofITSClusters[1] > 64+4*multTKL)
+      return kFALSE;
+  }
+  else {
+    printf("ERROR\n");
+  }
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after tkl-cluster cut", runName.Data(), 1.);
 
   return kTRUE;
+}
+
+Bool_t AliAnaQA::IsOutOfBunchPileUp()
+{
+  Bool_t bIsOutOfBunchPileup = kFALSE;
+
+  TBits ir1 = GetValue<TBits>("IR1");
+  for (Int_t i=1; i<= 3; i++)
+    bIsOutOfBunchPileup |= ir1.TestBitNumber(90-i);
+  for (Int_t i=3; i <= 11; i++)
+    bIsOutOfBunchPileup |= ir1.TestBitNumber(90+i);
+
+  return bIsOutOfBunchPileup;
 }

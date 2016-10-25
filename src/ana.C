@@ -4,6 +4,8 @@ void ana(const std::string listname = "filelist.txt",
          Bool_t proof = kTRUE,
          Long64_t nEvents = TTree::kMaxEntries)
 {
+  const std::string ana = "AliAnaQA";
+
   // prepare chain
   TChain chain("events");
   ifstream infile(listname);
@@ -25,7 +27,7 @@ void ana(const std::string listname = "filelist.txt",
   }
 
   // run analysis
-  TSelector *selector = new AliAnaQA();
+  TSelector *selector = (TSelector*) TClass::GetClass(ana.c_str())->New();
   chain.Process(selector, "", nEvents);
 
   // terminate PROOF (if enabled)

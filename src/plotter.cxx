@@ -47,8 +47,13 @@ void plotter::plot()
       kv.second->LabelsDeflate("X");
     }
     if (kv.second->GetYaxis()->IsAlphanumeric()) {
-      kv.second->LabelsOption("a", "Y");
+      if (kv.first != "stats")
+        kv.second->LabelsOption("a", "Y");
       kv.second->LabelsDeflate("Y");
+    }
+    if (kv.second->GetZaxis()->IsAlphanumeric()) {
+      kv.second->LabelsOption("a", "Z");
+      kv.second->LabelsDeflate("Z");
     }
 
     if (fDrawFunctions.count(kv.first) != 0) {
