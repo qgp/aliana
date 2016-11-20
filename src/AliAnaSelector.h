@@ -8,6 +8,8 @@
 #include "TList.h"
 #include "TH1F.h"
 
+#include "AliTreeReaderValue.h"
+
 class AliAnaSelector : public TSelector {
  public:
   AliAnaSelector(TTree * = 0);
@@ -55,9 +57,9 @@ void AliAnaSelector::AddValue(const std::string &name, const std::string &name_o
 
   // printf("AddValue(\"%s\", \"%s\")\n", name.c_str(), name_orig.c_str());
   if (name_orig.length() == 0)
-    fValueMap[name] = new TTreeReaderValue<T>(fReader, name.c_str());
+    fValueMap[name] = new AliTreeReaderValue<T>(fReader, name.c_str());
   else
-    fValueMap[name] = new TTreeReaderValue<T>(fReader, name_orig.c_str());
+    fValueMap[name] = new AliTreeReaderValue<T>(fReader, name_orig.c_str());
 
   fTypeMap[name] = typeid(T).hash_code();
 }
@@ -67,7 +69,7 @@ T AliAnaSelector::GetValue(const std::string &name, const std::string &name_orig
 {
   T *ptr = GetPointer<T>(name, name_orig);
   if (!ptr)
-    ::Fatal(__FUNCTION__, "got null pointer for TTreeReaderValue");
+    ::Fatal(__FUNCTION__, "got null pointer for AliTreeReaderValue");
 
   return *ptr;
 }
@@ -114,11 +116,13 @@ T* AliAnaSelector::GetPointer(const std::string &name, const std::string &name_o
     fTypeChecked[name] = kTRUE;
   }
 
-  // // check if value is valid
-  // if (!fValueMap[name]->IsValid())
-  //   printf("value for \"%s\" not valid: setup/read status: %i/%i\n",
-  //          name.c_str(), fValueMap[name]->GetSetupStatus(), fValueMap[name]->GetReadStatus());
+  T *p = ((AliTreeReaderValue<T>*) fValueMap[name])->Get();
 
-  return ((TTreeReaderValue<T>*) fValueMap[name])->Get();
+  // check if value is valid
+  if (!fValueMap[name]->IsValid())
+    printf("value for \"%s\" not valid: setup/read status: %i/%i\n",
+           name.c_str(), fValueMap[name]->GetSetupStatus(), fValueMap[name]->GetReadStatus());
+
+  return p;
 }
 #endif

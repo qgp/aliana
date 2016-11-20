@@ -48,7 +48,7 @@ void AliAnaSelector::SlaveBegin(TTree *tree)
 
 Bool_t AliAnaSelector::Process(Long64_t entry)
 {
-  fReader.SetEntry(entry);
+  fReader.SetLocalEntry(entry);
 
   return UserProcess();
 }

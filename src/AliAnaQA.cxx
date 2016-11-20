@@ -4,6 +4,7 @@
 
 #include "AliVTrack.h"
 #include "AliVEvent.h"
+#include "AliCFParticle.h"
 
 #include "AliAnaQA.h"
 
@@ -55,6 +56,8 @@ void AliAnaQA::UserInit()
   AddHistogram(new TH2F("etaphi", "tracks;#eta;#varphi",
                         200, -1., 1.,
                         200, 0., 2*TMath::Pi()));
+  AddHistogram(new TH1F("pt", "p_{T} (GeV/#it{c});counts",
+                        100, 0., 20.));
   AddHistogram(new TH1F("runs", "run;counts",
                         1, 0, 0));
   AddHistogram(new TH2F("perc_v0m", "V0M percentile;percentile;run;counts",
@@ -113,8 +116,13 @@ Bool_t AliAnaQA::UserProcess()
 
   GetHistogram("ntracks")->Fill(nTracks);
   for (Int_t iTrack = 0; iTrack < nTracks; ++iTrack) {
-    if (AliVTrack *track = (AliVTrack*) (*tracks)[iTrack])
+    if (AliCFParticle *track = (AliCFParticle*) (*tracks)[iTrack]) {
+      const UInt_t filterMask = 1;
+      if (!(track->Mask() & filterMask == filterMask))
+        continue;
       GetHistogram("etaphi")->Fill(track->Eta(), track->Phi());
+      GetHistogram("pt")->Fill(track->Pt());
+    }
   }
 
   return kTRUE;
@@ -152,6 +160,7 @@ Bool_t AliAnaQA::IsGoodEvent()
 
   //trigger check
   UInt_t classfired = 1 << 0; // MB
+  // UInt_t classfired = 1 << 3; // VHM
   if (classfired && !(GetValue<UInt_t>("classes") & classfired))
     return kFALSE;
   ((TH3*) GetHistogram("stats"))->Fill(cent, "after trigger", runName.Data(), 1.);
@@ -197,16 +206,16 @@ Bool_t AliAnaQA::IsGoodEvent()
     return kFALSE;
   ((TH3*) GetHistogram("stats"))->Fill(cent, "after SPD pile-up check", runName.Data(), 1.);
 
-  // //tkl-cluster cut
-  // UInt_t multTKL = GetValue<Float_t>("multTKL");
-  // if (fNofITSClusters.GetSize() > 0) {
-  //   if (fNofITSClusters[0]+fNofITSClusters[1] > 64+4*multTKL)
-  //     return kFALSE;
-  // }
-  // else {
-  //   printf("ERROR\n");
-  // }
-  // ((TH3*) GetHistogram("stats"))->Fill(cent, "after tkl-cluster cut", runName.Data(), 1.);
+  //tkl-cluster cut
+  UInt_t multTKL = GetValue<Float_t>("multTKL");
+  if (fNofITSClusters.GetSize() > 0) {
+    if (fNofITSClusters[0]+fNofITSClusters[1] > 64+4*multTKL)
+      return kFALSE;
+  }
+  else {
+    printf("ERROR\n");
+  }
+  ((TH3*) GetHistogram("stats"))->Fill(cent, "after tkl-cluster cut", runName.Data(), 1.);
 
   return kTRUE;
 }

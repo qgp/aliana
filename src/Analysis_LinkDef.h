@@ -6,5 +6,6 @@
 
 #pragma link C++ class AliAnaQA+;
 #pragma link C++ class AliAnaSelector+;
+#pragma link C++ class AliTreeReaderValue+;
 
 #endif

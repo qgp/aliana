@@ -20,7 +20,7 @@ plotter::~plotter()
 
 }
 
-void plotter::register_draw(std::string name, std::function<void(TH1*, const std::string&)> func)
+void plotter::register_draw(std::string name, std::function<Bool_t(TH1*, const std::string&)> func)
 {
   fDrawFunctions.emplace(name, func);
 }
@@ -57,8 +57,8 @@ void plotter::plot()
     }
 
     if (fDrawFunctions.count(kv.first) != 0) {
-      fDrawFunctions[kv.first](kv.second, options);
-      continue;
+      if (!fDrawFunctions[kv.first](kv.second, options))
+        continue;
     }
 
     TCanvas c;
